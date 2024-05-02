@@ -9,33 +9,19 @@ pub struct Base64Opt {}
 
 #[derive(Parser, Debug)]
 pub struct CsvOpt {
-    #[arg(short, long, value_parser=parse_input, help = "the csv file to translate")]
+    #[arg(short, long, value_parser=parse_input)]
     pub input: String,
 
-    #[arg(
-        short,
-        long,
-        help = "the file to translate into",
-        default_value = "output"
-    )]
-    pub output: String,
+    #[arg(short, long)]
+    pub output: Option<String>,
 
-    #[arg(
-        short,
-        long,
-        help = "the output format: json/yaml",
-        default_value = "json"
-    )]
+    #[arg(short, long, default_value = "json")]
     pub format: Ofmt,
 
     #[arg(short, long, default_value_t = ',')]
     pub delimiter: char,
 
-    #[arg(
-        long,
-        help = "whether or not has header for the csv data",
-        default_value_t = true
-    )]
+    #[arg(long, default_value_t = true)]
     pub header: bool,
 }
 
@@ -47,10 +33,11 @@ pub fn parse_input(input: &str) -> Result<String, String> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Ofmt {
     Json,
     Yaml,
+    Toml,
 }
 
 impl FromStr for Ofmt {
@@ -59,6 +46,7 @@ impl FromStr for Ofmt {
         match s {
             "json" => Ok(Ofmt::Json),
             "yaml" => Ok(Ofmt::Yaml),
+            "toml" => Ok(Ofmt::Toml),
             _ => Err(anyhow::anyhow!("Invalid format")),
         }
     }
@@ -69,6 +57,7 @@ impl From<Ofmt> for &'static str {
         match value {
             Ofmt::Json => "json",
             Ofmt::Yaml => "yaml",
+            Ofmt::Toml => "toml",
         }
     }
 }
