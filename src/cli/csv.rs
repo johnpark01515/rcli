@@ -1,5 +1,7 @@
 use anyhow::{Error, Result};
 use clap::Parser;
+use std::fmt::Display;
+use std::path::Path;
 use std::str::FromStr;
 
 #[derive(Debug, Parser)]
@@ -7,7 +9,7 @@ pub struct Base64Opt {}
 
 #[derive(Parser, Debug)]
 pub struct CsvOpt {
-    #[arg(short, long, help = "the csv file to translate")]
+    #[arg(short, long, value_parser=parse_input, help = "the csv file to translate")]
     pub input: String,
 
     #[arg(
@@ -37,7 +39,15 @@ pub struct CsvOpt {
     pub header: bool,
 }
 
-#[derive(Debug, Clone)]
+pub fn parse_input(input: &str) -> Result<String, String> {
+    if Path::new(input).exists() {
+        Ok(input.into())
+    } else {
+        Err("File does not exist".into())
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
 pub enum Ofmt {
     Json,
     Yaml,
@@ -60,5 +70,10 @@ impl From<Ofmt> for &'static str {
             Ofmt::Json => "json",
             Ofmt::Yaml => "yaml",
         }
+    }
+}
+impl Display for Ofmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", Into::<&str>::into(*self))
     }
 }

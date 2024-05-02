@@ -13,7 +13,7 @@ pub struct Rcli {
 
 #[derive(Debug, Subcommand)]
 pub enum SubCmd {
-    #[command(name = "csv", about = "translate csv to other format")]
+    #[command(name = "csv", about = "Show csv or convert csv to other formats")]
     Csv(CsvOpt),
 
     #[command(name = "b64", about = "use base64 to encode a string or a file")]
