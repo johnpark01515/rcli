@@ -1,11 +1,8 @@
+use crate::parse_input;
 use anyhow::{Error, Result};
 use clap::Parser;
 use std::fmt::Display;
-use std::path::Path;
 use std::str::FromStr;
-
-#[derive(Debug, Parser)]
-pub struct Base64Opt {}
 
 #[derive(Parser, Debug)]
 pub struct CsvOpt {
@@ -23,14 +20,6 @@ pub struct CsvOpt {
 
     #[arg(long, default_value_t = true)]
     pub header: bool,
-}
-
-pub fn parse_input(input: &str) -> Result<String, String> {
-    if Path::new(input).exists() {
-        Ok(input.into())
-    } else {
-        Err("File does not exist".into())
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

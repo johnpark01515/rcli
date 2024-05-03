@@ -1,8 +1,11 @@
+mod base;
 mod csv;
 mod genpass;
+use std::path::Path;
+
+pub use base::{Base64Format, BaseDecodeOpt, BaseEncodeOpt, BaseSubcmd};
 pub use csv::{CsvOpt, Ofmt};
 
-use self::csv::Base64Opt;
 use self::genpass::GenPwdOpt;
 use clap::{Parser, Subcommand};
 
@@ -21,6 +24,14 @@ pub enum SubCmd {
     #[command(name = "genpass", about = "Gen a password")]
     Genpassword(GenPwdOpt),
 
-    #[command(name = "b64", about = "use base64 to encode a string or a file")]
-    Base64(Base64Opt),
+    #[command(subcommand)]
+    Base64(BaseSubcmd),
+}
+
+pub fn parse_input(input: &str) -> Result<String, String> {
+    if Path::new(input).exists() || input == "-" {
+        Ok(input.into())
+    } else {
+        Err("File does not exist".into())
+    }
 }

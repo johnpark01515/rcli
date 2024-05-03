@@ -1,6 +1,9 @@
 use anyhow::Result;
 use clap::Parser;
-use rcli::{csv_process, genpass_process, Rcli, SubCmd};
+use rcli::{
+    base64_decode_process, base64_encode_process, csv_process, genpass_process, BaseSubcmd, Rcli,
+    SubCmd,
+};
 
 fn main() -> Result<()> {
     let rcli = Rcli::parse();
@@ -24,7 +27,16 @@ fn main() -> Result<()> {
             Ok(())
         }
         Some(SubCmd::Base64(base64)) => {
-            print!("{:?}", base64);
+            match base64 {
+                BaseSubcmd::Decode(opt) => {
+                    let res = base64_decode_process(&opt.input, opt.format)?;
+                    println!("{}", res);
+                }
+                BaseSubcmd::Encode(opt) => {
+                    let res = base64_encode_process(&opt.input, opt.format)?;
+                    println!("{}", res);
+                }
+            }
             Ok(())
         }
         _ => Err(anyhow::anyhow!("No such command")),
