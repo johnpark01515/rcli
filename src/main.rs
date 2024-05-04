@@ -1,8 +1,9 @@
 use anyhow::Result;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use clap::Parser;
 use rcli::{
-    base64_decode_process, base64_encode_process, csv_process, genpass_process, BaseSubcmd, Rcli,
-    SubCmd,
+    base64_decode_process, base64_encode_process, csv_process, genpass_process, process_gen_key,
+    process_sign, process_verify, BaseSubcmd, Rcli, SubCmd, TextSubcmd,
 };
 
 fn main() -> Result<()> {
@@ -29,16 +30,29 @@ fn main() -> Result<()> {
         Some(SubCmd::Base64(base64)) => {
             match base64 {
                 BaseSubcmd::Decode(opt) => {
-                    let res = base64_decode_process(&opt.input, opt.format)?;
-                    println!("{}", res);
+                    base64_decode_process(&opt.input, opt.format)?;
                 }
                 BaseSubcmd::Encode(opt) => {
-                    let res = base64_encode_process(&opt.input, opt.format)?;
-                    println!("{}", res);
+                    base64_encode_process(&opt.input, opt.format)?;
                 }
             }
             Ok(())
         }
+        Some(SubCmd::Text(sub_cmd)) => match sub_cmd {
+            TextSubcmd::Sign(opt) => {
+                let res = process_sign(&opt.input, &opt.key, opt.format)?;
+                let encoded = URL_SAFE_NO_PAD.encode(res);
+                println!("{}", encoded);
+                Ok(())
+            }
+            TextSubcmd::Verify(opt) => {
+                let sign = URL_SAFE_NO_PAD.decode(opt.sig)?;
+                let res = process_verify(&opt.input, &opt.key, opt.format, &sign)?;
+                println!("{}", res);
+                Ok(())
+            }
+            TextSubcmd::Genkey(opt) => process_gen_key(&opt.output),
+        },
         _ => Err(anyhow::anyhow!("No such command")),
     }
 }

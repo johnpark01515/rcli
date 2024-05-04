@@ -1,13 +1,13 @@
 mod base;
 mod csv;
 mod genpass;
-use std::path::Path;
-
-pub use base::{Base64Format, BaseDecodeOpt, BaseEncodeOpt, BaseSubcmd};
-pub use csv::{CsvOpt, Ofmt};
+mod text;
 
 use self::genpass::GenPwdOpt;
+pub use base::{Base64Format, BaseDecodeOpt, BaseEncodeOpt, BaseSubcmd};
 use clap::{Parser, Subcommand};
+pub use csv::{CsvOpt, Ofmt};
+pub use text::{SignFormat, TextSubcmd};
 
 #[derive(Debug, Parser)]
 #[command(name="rcli", version, about, long_about = None)]
@@ -26,12 +26,7 @@ pub enum SubCmd {
 
     #[command(subcommand)]
     Base64(BaseSubcmd),
-}
 
-pub fn parse_input(input: &str) -> Result<String, String> {
-    if Path::new(input).exists() || input == "-" {
-        Ok(input.into())
-    } else {
-        Err("File does not exist".into())
-    }
+    #[command(subcommand)]
+    Text(TextSubcmd),
 }

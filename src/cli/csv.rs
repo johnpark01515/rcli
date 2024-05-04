@@ -1,12 +1,13 @@
-use crate::parse_input;
 use anyhow::{Error, Result};
 use clap::Parser;
 use std::fmt::Display;
 use std::str::FromStr;
 
+use crate::utils::parse_file;
+
 #[derive(Parser, Debug)]
 pub struct CsvOpt {
-    #[arg(short, long, value_parser=parse_input)]
+    #[arg(short, long, value_parser=parse_file)]
     pub input: String,
 
     #[arg(short, long)]

@@ -1,6 +1,5 @@
 use anyhow::Result;
 use rand::prelude::*;
-use zxcvbn::zxcvbn;
 
 const UPPER: &[u8] = b"ABCDEFGHIGKLMNPQRSTUVWSYZ";
 const LOWER: &[u8] = b"abcdefghigkmnopqrstuvwsyz";
@@ -38,8 +37,5 @@ pub fn genpass_process(
     }
     res.shuffle(&mut rng);
     let password = String::from_utf8(res)?;
-    println!("{}", password);
-    let estimate = zxcvbn(&password, &[])?;
-    println!("{}", estimate.score());
     Ok(password)
 }

@@ -1,4 +1,4 @@
-use crate::parse_input;
+use crate::utils::parse_file;
 use anyhow::{Error, Result};
 use clap::Parser;
 use core::fmt::{self, Display};
@@ -15,7 +15,7 @@ pub enum BaseSubcmd {
 
 #[derive(Debug, Parser)]
 pub struct BaseDecodeOpt {
-    #[arg(short, long, value_parser = parse_input, default_value = "-")]
+    #[arg(short, long, value_parser = parse_file, default_value = "-")]
     pub input: String,
 
     #[arg(short, long, default_value = "standard")]
@@ -24,7 +24,7 @@ pub struct BaseDecodeOpt {
 
 #[derive(Debug, Parser)]
 pub struct BaseEncodeOpt {
-    #[arg(short, long, value_parser = parse_input, default_value = "-")]
+    #[arg(short, long, value_parser = parse_file, default_value = "-")]
     pub input: String,
     #[arg(short, long, default_value = "standard")]
     pub format: Base64Format,

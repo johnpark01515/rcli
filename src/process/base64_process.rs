@@ -1,17 +1,8 @@
-use crate::Base64Format;
+use crate::{utils::get_reader, Base64Format};
 use anyhow::{Error, Result};
 use base64::{
     engine::general_purpose::STANDARD, engine::general_purpose::URL_SAFE_NO_PAD, Engine as _,
 };
-use std::{io::Read, path::Path};
-fn get_reader(input: &str) -> Result<Box<dyn Read>> {
-    let reader: Box<dyn Read> = if "-" == input {
-        Box::new(std::io::stdin())
-    } else {
-        Box::new(std::fs::File::open(Path::new(input))?)
-    };
-    Ok(reader)
-}
 
 pub fn base64_encode_process(input: &str, format: Base64Format) -> Result<String, Error> {
     let mut reader = get_reader(input)?;
@@ -21,6 +12,7 @@ pub fn base64_encode_process(input: &str, format: Base64Format) -> Result<String
         Base64Format::Standard => STANDARD.encode(encode),
         Base64Format::Urlsafe => URL_SAFE_NO_PAD.encode(encode),
     };
+    println!("{}", out);
     Ok(out)
 }
 
@@ -33,12 +25,15 @@ pub fn base64_decode_process(input: &str, format: Base64Format) -> Result<String
         Base64Format::Standard => STANDARD.decode(decode)?,
         Base64Format::Urlsafe => URL_SAFE_NO_PAD.decode(decode)?,
     };
-    Ok(String::from_utf8(out)?)
+    let res = String::from_utf8(out)?;
+    print!("{}", res);
+    Ok(res)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
     #[test]
     fn test_base64_encode_process() -> Result<()> {
         let input = "Cargo.toml";
