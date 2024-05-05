@@ -1,3 +1,11 @@
 ### Index test
 
-Get http://localhost:8080/fixture/base64.txt
+Get http://localhost:8080/Cargo.toml
+
+### index tower
+GET http://localhost:8080/tower/Cargo.toml
+Range: bytes=1-100
+
+
+### index html
+GET http://localhost:8080/tower/fixture/
