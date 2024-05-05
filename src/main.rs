@@ -3,7 +3,8 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use clap::Parser;
 use rcli::{
     base64_decode_process, base64_encode_process, csv_process, genpass_process, process_gen_key,
-    process_sign, process_verify, BaseSubcmd, Rcli, SubCmd, TextSubcmd,
+    process_sign, process_text_decrype, process_text_encrypt, process_verify, BaseSubcmd, Rcli,
+    SubCmd, TextSubcmd,
 };
 
 fn main() -> Result<()> {
@@ -52,6 +53,17 @@ fn main() -> Result<()> {
                 Ok(())
             }
             TextSubcmd::Genkey(opt) => process_gen_key(&opt.output),
+            TextSubcmd::Encrypt(opt) => {
+                let res = process_text_encrypt(&opt.key, &opt.input)?;
+                print!("{}", res);
+                Ok(())
+            }
+
+            TextSubcmd::Decrypt(opt) => {
+                let res = process_text_decrype(&opt.key, &opt.input)?;
+                print!("decrypt:{}", res);
+                Ok(())
+            }
         },
         _ => Err(anyhow::anyhow!("No such command")),
     }

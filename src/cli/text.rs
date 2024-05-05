@@ -16,6 +16,30 @@ pub enum TextSubcmd {
 
     #[command(about = "Generate a key for blake3/ed25519")]
     Genkey(GenKeyOpt),
+
+    #[command(about = "Encrypt a text and put out base64")]
+    Encrypt(EncryptOpt),
+
+    #[command(about = "Encrypt a base64 text and put out raw text")]
+    Decrypt(DecryptOpt),
+}
+
+#[derive(Debug, Parser)]
+pub struct EncryptOpt {
+    #[arg(short, long, value_parser=parse_file)]
+    pub key: String,
+
+    #[arg(short, long, value_parser=parse_file, default_value="-")]
+    pub input: String,
+}
+
+#[derive(Debug, Parser)]
+pub struct DecryptOpt {
+    #[arg(short, long, value_parser=parse_file)]
+    pub key: String,
+
+    #[arg(short, long, value_parser=parse_file, default_value="-")]
+    pub input: String,
 }
 
 #[derive(Debug, Parser)]

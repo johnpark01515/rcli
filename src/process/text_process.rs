@@ -1,12 +1,19 @@
 use crate::genpass_process;
 use crate::utils::get_writer;
 use crate::{utils::get_reader, SignFormat};
-use anyhow::Ok;
-use anyhow::Result;
+use anyhow::{Ok, Result};
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
+use chacha20poly1305::{
+    aead::{Aead, KeyInit},
+    ChaCha20Poly1305,
+};
+use chacha20poly1305::{AeadCore, Key};
 use ed25519_dalek::SecretKey;
 use ed25519_dalek::Signature;
 use ed25519_dalek::Signer;
 use ed25519_dalek::SigningKey;
+use rand::rngs::OsRng;
 use std::io::Write;
 use std::path::Path;
 use std::{fs, io::Read};
@@ -75,7 +82,7 @@ impl Blake3 {
     }
 
     fn try_new(key: &[u8]) -> Result<Self> {
-        let key: [u8; 32] = key.try_into()?;
+        let key: [u8; 32] = key[..32].try_into()?;
         Ok(Self::new(key))
     }
 
@@ -100,7 +107,6 @@ impl TextVerify for Ed25519 {
         let mut buf = Vec::new();
         reader.read_to_end(&mut buf)?;
         let verifyer = SigningKey::from(self.key).verifying_key();
-        println!("{}", sign.len());
         let signature = Signature::from_bytes(sign.try_into()?);
         Ok(verifyer.verify_strict(&buf, &signature).is_ok())
     }
@@ -112,7 +118,7 @@ impl Ed25519 {
     }
 
     fn try_new(key: &[u8]) -> Result<Self> {
-        let key: [u8; 32] = key.try_into()?;
+        let key: [u8; 32] = key[..32].try_into()?;
         Ok(Self::new(key))
     }
 
@@ -124,10 +130,10 @@ impl Ed25519 {
 
 pub fn process_sign(input: &str, key: &str, format: SignFormat) -> Result<Vec<u8>> {
     let mut reader = get_reader(input)?;
-    let key = fs::read(key)?;
+    // let key = fs::read(key)?;
     let signed: Box<dyn TextSigned> = match format {
-        SignFormat::Blake3 => Box::new(Blake3::try_new(&key)?),
-        SignFormat::Ed25519 => Box::new(Ed25519::try_new(&key)?),
+        SignFormat::Blake3 => Box::new(Blake3::load(key)?),
+        SignFormat::Ed25519 => Box::new(Ed25519::load(key)?),
     };
     signed.sign(&mut reader)
 }
@@ -144,4 +150,75 @@ pub fn process_verify(input: &str, key: &str, format: SignFormat, sign: &[u8]) -
 pub fn process_gen_key(path: &str) -> Result<()> {
     let opt = GenKey::new(path);
     opt.gen_key()
+}
+
+pub struct ChaCha20Poly {
+    pub key: Key,
+}
+
+impl ChaCha20Poly {
+    fn new(key: [u8; 32]) -> Self {
+        ChaCha20Poly { key: key.into() }
+    }
+
+    fn try_new(key: &[u8]) -> Result<Self> {
+        let k: [u8; 32] = key[..32].try_into()?;
+        Ok(Self::new(k))
+    }
+
+    fn load(key_path: impl AsRef<Path>) -> Result<Self> {
+        let key = fs::read(key_path)?;
+        Self::try_new(&key)
+    }
+}
+
+trait Encrypt {
+    fn encrypt(&self, reader: &mut dyn Read) -> Result<String>;
+}
+
+trait Decrypt {
+    fn decrypt(&self, reader: &mut dyn Read) -> Result<String>;
+}
+
+impl Encrypt for ChaCha20Poly {
+    fn encrypt(&self, reader: &mut dyn Read) -> Result<String> {
+        let mut buf = String::new();
+        reader.read_to_string(&mut buf)?;
+        let cipher = ChaCha20Poly1305::new(&self.key);
+        let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 192-bits; unique per message
+        let ciphertext = cipher.encrypt(&nonce, buf.as_ref())?;
+        Ok(format!(
+            "{}|{}",
+            URL_SAFE_NO_PAD.encode(ciphertext),
+            URL_SAFE_NO_PAD.encode(nonce)
+        ))
+    }
+}
+
+impl Decrypt for ChaCha20Poly {
+    fn decrypt(&self, reader: &mut dyn Read) -> Result<String> {
+        let mut buf = String::new();
+        reader.read_to_string(&mut buf)?;
+        let index = buf.find('|').unwrap();
+
+        let encrypted = URL_SAFE_NO_PAD.decode(&buf[..index])?;
+        let nonce = URL_SAFE_NO_PAD.decode(&buf[index + 1..])?;
+        let nonce: [u8; 12] = nonce[..12].try_into()?;
+        let cipher = ChaCha20Poly1305::new(&self.key);
+        let plaintext = cipher.decrypt(&nonce.into(), encrypted.as_ref())?;
+        Ok(String::from_utf8(plaintext)?)
+    }
+}
+
+pub fn process_text_encrypt(key: &str, input: &str) -> Result<String> {
+    let chacha = ChaCha20Poly::load(key)?;
+    let mut reader = get_reader(input)?;
+    chacha.encrypt(&mut reader)
+}
+
+pub fn process_text_decrype(key: &str, enctypted: &str) -> Result<String> {
+    let chacha = ChaCha20Poly::load(key)?;
+    let mut reader = get_reader(enctypted)?;
+    chacha.decrypt(&mut reader)
+    // Ok("123".into())
 }

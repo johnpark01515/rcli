@@ -26,7 +26,6 @@ pub fn base64_decode_process(input: &str, format: Base64Format) -> Result<String
         Base64Format::Urlsafe => URL_SAFE_NO_PAD.decode(decode)?,
     };
     let res = String::from_utf8(out)?;
-    print!("{}", res);
     Ok(res)
 }
 
