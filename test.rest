@@ -6,6 +6,8 @@ Get http://localhost:8080/Cargo.toml
 GET http://localhost:8080/tower/Cargo.toml
 Range: bytes=1-100
 
+### tower index html
+GET http://localhost:8080/tower/fixture/
 
 ### index html
-GET http://localhost:8080/tower/fixture/
+GET http://localhost:8080/fixture/
