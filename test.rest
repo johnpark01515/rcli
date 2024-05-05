@@ -1,0 +1,3 @@
+### Index test
+
+Get http://localhost:8080/fixture/base64.txt

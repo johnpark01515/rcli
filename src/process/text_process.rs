@@ -184,6 +184,7 @@ impl Encrypt for ChaCha20Poly {
     fn encrypt(&self, reader: &mut dyn Read) -> Result<String> {
         let mut buf = String::new();
         reader.read_to_string(&mut buf)?;
+        let buf = buf.trim();
         let cipher = ChaCha20Poly1305::new(&self.key);
         let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 192-bits; unique per message
         let ciphertext = cipher.encrypt(&nonce, buf.as_ref())?;
