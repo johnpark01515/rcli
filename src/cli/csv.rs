@@ -1,9 +1,10 @@
-use anyhow::{Error, Result};
+use anyhow::Result;
 use clap::Parser;
 use std::fmt::Display;
 use std::str::FromStr;
 
 use crate::utils::parse_file;
+use crate::{csv_process, CmdExecutor};
 
 #[derive(Parser, Debug)]
 pub struct CsvOpt {
@@ -23,6 +24,17 @@ pub struct CsvOpt {
     pub header: bool,
 }
 
+impl CmdExecutor for CsvOpt {
+    async fn execute(self) -> Result<()> {
+        let output = if let Some(output) = self.output {
+            output
+        } else {
+            format!("output.{}", self.format)
+        };
+        csv_process(&self.input, self.format, &output).await
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Ofmt {
     Json,
@@ -31,7 +43,7 @@ pub enum Ofmt {
 }
 
 impl FromStr for Ofmt {
-    type Err = Error;
+    type Err = anyhow::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "json" => Ok(Ofmt::Json),

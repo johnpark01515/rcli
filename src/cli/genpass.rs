@@ -1,3 +1,5 @@
+use crate::{genpass_process, CmdExecutor};
+use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
@@ -16,4 +18,19 @@ pub struct GenPwdOpt {
 
     #[arg(long)]
     pub nosymbol: bool,
+}
+
+impl CmdExecutor for GenPwdOpt {
+    async fn execute(self) -> Result<()> {
+        let res = genpass_process(
+            self.length,
+            self.noupper,
+            self.nolower,
+            self.nonumber,
+            self.nosymbol,
+        )
+        .await?;
+        println!("{}", res);
+        Ok(())
+    }
 }

@@ -4,21 +4,23 @@ mod genpass;
 mod http;
 mod text;
 
-use self::genpass::GenPwdOpt;
-pub use base::{Base64Format, BaseDecodeOpt, BaseEncodeOpt, BaseSubcmd};
+pub use self::genpass::GenPwdOpt;
+pub use base::*;
 use clap::{Parser, Subcommand};
 pub use csv::{CsvOpt, Ofmt};
-pub use http::HttpSubcmd;
-pub use text::{SignFormat, TextSubcmd};
+use enum_dispatch::enum_dispatch;
+pub use http::*;
+pub use text::*;
 
 #[derive(Debug, Parser)]
 #[command(name="rcli", version, about, long_about = None)]
 pub struct Rcli {
     #[command(subcommand)]
-    pub cmd: Option<SubCmd>,
+    pub cmd: SubCmd,
 }
 
 #[derive(Debug, Subcommand)]
+#[enum_dispatch(CmdExecutor)]
 pub enum SubCmd {
     #[command(name = "csv", about = "Show csv or convert csv to other formats")]
     Csv(CsvOpt),

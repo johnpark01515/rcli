@@ -6,7 +6,7 @@ const LOWER: &[u8] = b"abcdefghigkmnopqrstuvwsyz";
 const NUMBER: &[u8] = b"123456789";
 const SYMBOL: &[u8] = b"!@#$%^&*";
 
-pub fn genpass_process(
+pub async fn genpass_process(
     length: u8,
     noupper: bool,
     nolower: bool,

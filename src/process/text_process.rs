@@ -27,7 +27,7 @@ trait TextVerify {
 }
 
 trait GenKeyOutput {
-    fn gen_key(&self) -> Result<()>;
+    async fn gen_key(&self) -> Result<()>;
 }
 
 struct GenKey {
@@ -43,9 +43,9 @@ impl GenKey {
 }
 
 impl GenKeyOutput for GenKey {
-    fn gen_key(&self) -> Result<()> {
+    async fn gen_key(&self) -> Result<()> {
         let mut writer = get_writer(&self.path)?;
-        let key = genpass_process(32, false, false, false, false)?;
+        let key = genpass_process(32, false, false, false, false).await?;
         writer.write_all(key.as_bytes())?;
         Ok(())
     }
@@ -128,7 +128,7 @@ impl Ed25519 {
     }
 }
 
-pub fn process_sign(input: &str, key: &str, format: SignFormat) -> Result<Vec<u8>> {
+pub async fn process_sign(input: &str, key: &str, format: SignFormat) -> Result<Vec<u8>> {
     let mut reader = get_reader(input)?;
     // let key = fs::read(key)?;
     let signed: Box<dyn TextSigned> = match format {
@@ -138,7 +138,12 @@ pub fn process_sign(input: &str, key: &str, format: SignFormat) -> Result<Vec<u8
     signed.sign(&mut reader)
 }
 
-pub fn process_verify(input: &str, key: &str, format: SignFormat, sign: &[u8]) -> Result<bool> {
+pub async fn process_verify(
+    input: &str,
+    key: &str,
+    format: SignFormat,
+    sign: &[u8],
+) -> Result<bool> {
     let mut reader = get_reader(input)?;
     let verifier: Box<dyn TextVerify> = match format {
         SignFormat::Blake3 => Box::new(Blake3::load(key)?),
@@ -147,9 +152,9 @@ pub fn process_verify(input: &str, key: &str, format: SignFormat, sign: &[u8]) -
     verifier.verify(&mut reader, sign)
 }
 
-pub fn process_gen_key(path: &str) -> Result<()> {
+pub async fn process_gen_key(path: &str) -> Result<()> {
     let opt = GenKey::new(path);
-    opt.gen_key()
+    opt.gen_key().await
 }
 
 pub struct ChaCha20Poly {
@@ -211,15 +216,14 @@ impl Decrypt for ChaCha20Poly {
     }
 }
 
-pub fn process_text_encrypt(key: &str, input: &str) -> Result<String> {
+pub async fn process_text_encrypt(key: &str, input: &str) -> Result<String> {
     let chacha = ChaCha20Poly::load(key)?;
     let mut reader = get_reader(input)?;
     chacha.encrypt(&mut reader)
 }
 
-pub fn process_text_decrype(key: &str, enctypted: &str) -> Result<String> {
+pub async fn process_text_decrypt(key: &str, enctypted: &str) -> Result<String> {
     let chacha = ChaCha20Poly::load(key)?;
     let mut reader = get_reader(enctypted)?;
     chacha.decrypt(&mut reader)
-    // Ok("123".into())
 }

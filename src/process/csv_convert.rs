@@ -15,7 +15,7 @@ struct Player {
     kit: u8,
 }
 
-pub fn csv_process(path: &str, format: Ofmt, output: &str) -> Result<()> {
+pub async fn csv_process(path: &str, format: Ofmt, output: &str) -> Result<()> {
     let file_path = Path::new(path);
     if !file_path.exists() {
         return Err(anyhow::anyhow!("file not exist"));

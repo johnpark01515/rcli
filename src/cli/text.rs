@@ -1,12 +1,18 @@
-use crate::utils::{parse_file, parse_out};
-use anyhow::Error;
+use crate::{
+    parse_file, parse_out, process_gen_key, process_sign, process_text_decrypt,
+    process_text_encrypt, process_verify, CmdExecutor,
+};
+use anyhow::{Error, Result};
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use clap::{Parser, Subcommand};
+use enum_dispatch::enum_dispatch;
 use std::{
     fmt::{self, Display},
     str::FromStr,
 };
 
 #[derive(Debug, Subcommand)]
+#[enum_dispatch(CmdExecutor)]
 pub enum TextSubcmd {
     #[command(about = "Sign a text with a private/session key and return a signature")]
     Sign(SignOpt),
@@ -33,6 +39,14 @@ pub struct EncryptOpt {
     pub input: String,
 }
 
+impl CmdExecutor for EncryptOpt {
+    async fn execute(self) -> Result<()> {
+        let res = process_text_encrypt(&self.key, &self.input).await?;
+        print!("{}", res);
+        Ok(())
+    }
+}
+
 #[derive(Debug, Parser)]
 pub struct DecryptOpt {
     #[arg(short, long, value_parser=parse_file)]
@@ -42,10 +56,24 @@ pub struct DecryptOpt {
     pub input: String,
 }
 
+impl CmdExecutor for DecryptOpt {
+    async fn execute(self) -> Result<()> {
+        let res = process_text_decrypt(&self.key, &self.input).await?;
+        print!("{}", res);
+        Ok(())
+    }
+}
+
 #[derive(Debug, Parser)]
 pub struct GenKeyOpt {
     #[arg(short, long, value_parser = parse_out, default_value = "-")]
     pub output: String,
+}
+
+impl CmdExecutor for GenKeyOpt {
+    async fn execute(self) -> Result<()> {
+        process_gen_key(&self.output).await
+    }
 }
 
 #[derive(Debug, Parser)]
@@ -58,6 +86,15 @@ pub struct SignOpt {
 
     #[arg(short, long, default_value = "blake3")]
     pub format: SignFormat,
+}
+
+impl CmdExecutor for SignOpt {
+    async fn execute(self) -> Result<()> {
+        let res = process_sign(&self.input, &self.key, self.format).await?;
+        let encoded = URL_SAFE_NO_PAD.encode(res);
+        println!("{}", encoded);
+        Ok(())
+    }
 }
 
 #[derive(Debug, Parser)]
@@ -73,6 +110,15 @@ pub struct VerifyOpt {
 
     #[arg(short, long)]
     pub sig: String,
+}
+
+impl CmdExecutor for VerifyOpt {
+    async fn execute(self) -> Result<()> {
+        let sign = URL_SAFE_NO_PAD.decode(self.sig)?;
+        let res = process_verify(&self.input, &self.key, self.format, &sign).await?;
+        println!("{}", res);
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
