@@ -2,6 +2,7 @@ mod base;
 mod csv;
 mod genpass;
 mod http;
+mod jwt;
 mod text;
 
 pub use self::genpass::GenPwdOpt;
@@ -10,6 +11,7 @@ use clap::{Parser, Subcommand};
 pub use csv::{CsvOpt, Ofmt};
 use enum_dispatch::enum_dispatch;
 pub use http::*;
+pub use jwt::*;
 pub use text::*;
 
 #[derive(Debug, Parser)]
@@ -36,4 +38,7 @@ pub enum SubCmd {
 
     #[command(subcommand)]
     Http(HttpSubcmd),
+
+    #[command(subcommand)]
+    Jwt(JwtSubcmd),
 }
